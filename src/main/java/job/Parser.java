@@ -1,12 +1,14 @@
 package job;
 
-import dto.CFG;
+import dto.CFGrammar;
 
 public class Parser {
 
-    private CFG cfgdto;
+    private CFGrammar cfgdto;
 
-    public Parser(CFG cfgdto) {
+    public Parser(CFGrammar cfgdto) {
         this.cfgdto = cfgdto;
     }
+
+
 }

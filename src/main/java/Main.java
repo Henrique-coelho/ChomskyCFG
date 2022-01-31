@@ -1,15 +1,19 @@
-import dto.CFG;
-import job.Parser;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dto.CFGrammar;
+import dto.CFGrammarDTO;
+
+import java.io.File;
 
 public class Main {
 
     public static void main(String[] args) throws Exception {
-        try (CFG cfg = new CFG(args[0])){
-            Parser parser = new Parser(cfg);
-        } catch (Exception e) {
-            throw new Exception("Unable to open file");
-        }
-    }
 
+        String fileName = args[0];
+        ObjectMapper objectMapper = new ObjectMapper();
+        CFGrammarDTO dto = objectMapper.readValue(new File(fileName), CFGrammarDTO.class);
+
+        CFGrammar grammar = new CFGrammar(dto);
+
+    }
 
 }
