@@ -1,6 +1,7 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dto.CFGrammar;
 import dto.CFGrammarDTO;
+import job.Parser;
 
 import java.io.File;
 
@@ -13,6 +14,9 @@ public class Main {
         CFGrammarDTO dto = objectMapper.readValue(new File(fileName), CFGrammarDTO.class);
 
         CFGrammar grammar = new CFGrammar(dto);
+        Parser parser = new Parser();
+        CFGrammar FNCGrammar = parser.parseGrammarToFNC(grammar);
+        parser.printFNC(FNCGrammar);
 
     }
 
