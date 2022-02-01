@@ -3,16 +3,16 @@ package operations.impl;
 import dto.CFGrammar;
 import lombok.NoArgsConstructor;
 import operations.Operations;
+import utils.OperationsUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @NoArgsConstructor
 public class OperationsImpl implements Operations {
-	
+
     @Override
     public CFGrammar removeUselessVar(CFGrammar cfGrammar) {
     	List<String> lambdListOG;
@@ -41,11 +41,11 @@ public class OperationsImpl implements Operations {
 	    			if(!newRules.contains(l))
 	    				newRules.add(l);
 	    			
-	    			// Se este caractere possui regra Lâmbda
+	    			// Se este caractere possui regra Lambda
 	    			if(l.get(1).contains(c)) {
 	    				String rule = l.get(1);
 	    				
-	    				// Lista todos os índices do caracter mencionado
+	    				// Lista todos os indices do caracter mencionado
 	    				List<Integer> charsWithLambda = new ArrayList<>();
 	    				for(int i=0; i<rule.length(); i++) {
 	    					if (lambdaList.contains(rule.substring(i, i+1))) {
@@ -53,9 +53,9 @@ public class OperationsImpl implements Operations {
 	    					}
 	    				}
 	    				
-	    				// Cria todas permutações disponível de variações de posições do caractere e escreve as regras
+	    				// Cria todas permutacoes disponivel de variacoes de posicoes do caractere e escreve as regras
 	    				List<String> pendingRules = new ArrayList<>();
-	    				for(HashSet<Integer> combination : permute(charsWithLambda)) {
+	    				for(HashSet<Integer> combination : OperationsUtils.permute(charsWithLambda)) {
 	    					String newRuleAux = "";
 	    					for(int i=0; i<rule.length(); i++) {
 	    						if(charsWithLambda.contains(i)) {
@@ -68,7 +68,7 @@ public class OperationsImpl implements Operations {
 	    						}
 	    					}
 	    					
-	    					// Caso a regra é vazia, retorna uma nova regra Lâmbda
+	    					// Caso a regra ï¿½ vazia, retorna uma nova regra Lambda
 	    					if(newRuleAux.isEmpty()) 
 	    						pendingRules.add("#");
 	    					else
@@ -90,10 +90,10 @@ public class OperationsImpl implements Operations {
 	    	// Atualiza as novas regras
 	    	newGrammar.setRules(newRules);
 	    	
-	    	// Enquanto existir novas regras lâmbdas geradas, o processo se repete
+	    	// Enquanto existir novas regras lï¿½mbdas geradas, o processo se repete
         } while (!new HashSet<>(lambdaList).equals(new HashSet<>(lambdListOG)));
         
-        // Remove as regras Lâmbdas
+        // Remove as regras Lambdas
         newGrammar.setRules(newGrammar.getRules().stream()
         		.filter(l -> (!l.get(1).contains("#")))
         		.collect(Collectors.toList())
@@ -101,43 +101,6 @@ public class OperationsImpl implements Operations {
         return newGrammar;
     }
 
-    private List<HashSet<Integer>> permute(List<Integer> mainList) {
-    	var p = permute(new ArrayList<>(), mainList);
-    	var q = p.stream()
-    			.map(l -> {
-    				return new HashSet<>(l);
-    			})
-    			.distinct()
-    			.collect(Collectors.toList());
-    	q.add(new HashSet<>());
-    	return q;
-    }
-    
-    private List<List<Integer>> permute(List<Integer> midList, List<Integer> mainList) {
-    	int size = mainList.size();
-    	List<List<Integer>> combinations = new ArrayList<>();
-    	List<Integer> auxList;
-    	
-    	for(int i=0;i<size;i++) {
-    		auxList = new ArrayList<>(midList);
-    		auxList.add(mainList.get(i));
-    		if(auxList.size() != size) {
-    			for(List<Integer> comb : permute(auxList,mainList)) {
-    				combinations.add(comb);
-    			}
-    		}
-    		else {
-    			combinations.add(auxList);
-    		}
-    		
-    	}
-    	return combinations;
-    }
-    
-    
-    
-    
-    
     @Override
     public CFGrammar removeUnitaryRules(CFGrammar cfGrammar) {
         //TODO
