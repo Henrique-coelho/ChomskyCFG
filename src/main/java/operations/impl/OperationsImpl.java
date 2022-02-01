@@ -17,10 +17,11 @@ public class OperationsImpl implements Operations {
     public CFGrammar removeUselessVar(CFGrammar cfGrammar) {
     	List<String> lambdListOG;
     	List<String> lambdaList = new ArrayList<>();
+    	CFGrammar newGrammar = cfGrammar;
         do {
         	lambdListOG = lambdaList;
         	// Identifica novas regras nulas
-	    	lambdaList = cfGrammar.getRules().stream()
+	    	lambdaList = newGrammar.getRules().stream()
 	                .map(l -> {
 	                    List<String> returnList = new ArrayList<>();
 	                    l.stream().forEach(rule -> {
@@ -39,37 +40,67 @@ public class OperationsImpl implements Operations {
 	    		for(List<String> l : cfGrammar.getRules()) {
 	    			if(!newRules.contains(l))
 	    				newRules.add(l);
+	    			
+	    			// Se este caractere possui regra Lâmbda
 	    			if(l.get(1).contains(c)) {
+	    				String rule = l.get(1);
 	    				
+	    				// Lista todos os índices do caracter mencionado
+	    				List<Integer> charsWithLambda = new ArrayList<>();
+	    				for(int i=0; i<rule.length(); i++) {
+	    					if (lambdaList.contains(rule.substring(i, i+1))) {
+	    						charsWithLambda.add(i);
+	    					}
+	    				}
+	    				
+	    				// Cria todas permutações disponível de variações de posições do caractere e escreve as regras
+	    				List<String> pendingRules = new ArrayList<>();
+	    				for(HashSet<Integer> combination : permute(charsWithLambda)) {
+	    					String newRuleAux = "";
+	    					for(int i=0; i<rule.length(); i++) {
+	    						if(charsWithLambda.contains(i)) {
+	    							if(combination.contains(i)) {
+	    								newRuleAux = newRuleAux.concat(rule.substring(i,i+1));
+	    							}
+	    						}
+	    						else {
+	    							newRuleAux = newRuleAux.concat(rule.substring(i,i+1));
+	    						}
+	    					}
+	    					
+	    					// Caso a regra é vazia, retorna uma nova regra Lâmbda
+	    					if(newRuleAux.isEmpty()) 
+	    						pendingRules.add("#");
+	    					else
+	    						pendingRules.add(newRuleAux);
+	    				}
+	    				
+	    				// Formata as novas regras
+	    				for(String pendingRule : pendingRules) {
+	    					List<String> newRule = new ArrayList<>();
+	    					newRule.add(l.get(0));
+	    					newRule.add(pendingRule);
+	    					if(!newRules.contains(newRule) && !(l.get(0).equals(pendingRule)))
+	    	    				newRules.add(newRule);
+	    				}
 	    			}
 	    		}
 	    	};
+
+	    	// Atualiza as novas regras
+	    	newGrammar.setRules(newRules);
 	    	
-	    	List<Integer> t = new ArrayList<>();
-	    	t.add(1);
-	    	t.add(2);
-	    	t.add(3);
-	    	
-	    	List<HashSet<Integer>> p = permute(t);
-	    	
-	    	List<String> llfinal = lambdaList;
-	    	CFGrammar cfAux = cfGrammar;
-	    	cfGrammar.getRules().stream()
-	    		.map(l -> {
-	    			l.get(1);
-	    			Boolean aux = false;
-	    			
-	    			return null;
-	    		});
-	    	
+	    	// Enquanto existir novas regras lâmbdas geradas, o processo se repete
         } while (!new HashSet<>(lambdaList).equals(new HashSet<>(lambdListOG)));
-        return cfGrammar;
+        
+        // Remove as regras Lâmbdas
+        newGrammar.setRules(newGrammar.getRules().stream()
+        		.filter(l -> (!l.get(1).contains("#")))
+        		.collect(Collectors.toList())
+        	);
+        return newGrammar;
     }
 
-    
-    
-    
-    
     private List<HashSet<Integer>> permute(List<Integer> mainList) {
     	var p = permute(new ArrayList<>(), mainList);
     	var q = p.stream()
