@@ -2,6 +2,7 @@ package job;
 
 import dto.CFGrammar;
 import operations.Operations;
+import operations.impl.OperationsImpl;
 
 public class Parser {
     private static final String JSON_STRING = "{ \"glc\": [\n  [{variables}],\n  [{alphabetSymbols}],\n  [{rules}],\n  \"{startVar}\"\n]}";
@@ -10,9 +11,10 @@ public class Parser {
     private static final String RULES = "{rules}";
     private static final String START_VAR = "{startVar}";
 
-    Operations op;
+    OperationsImpl op;
 
     public CFGrammar parseGrammarToFNC(CFGrammar cfGrammar){
+    	op = new OperationsImpl();
         cfGrammar = op.removeUselessVar(cfGrammar);
         cfGrammar = op.removeUnitaryRules(cfGrammar);
         cfGrammar = op.makeRulesVarOnly(cfGrammar);
