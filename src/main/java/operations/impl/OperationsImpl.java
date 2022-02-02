@@ -122,13 +122,43 @@ public class OperationsImpl implements Operations {
 
 					if(regra.equals(regraUnitaria) && regra.get(0).equals(r)){
 						chain.add(grammarRules.get(i).get(1));
+
+						int finalI = i;
+						unitaryRules.forEach(a -> {
+							if(a.get(0).equals(grammarRules.get(finalI).get(1))){
+								var newRule = unitaryRules.stream()
+										.filter(p-> p.get(0).equals(grammarRules.get(finalI).get(1)))
+										.collect(Collectors.toList())
+										.get(0).get(1);
+								chain.add(newRule);
+							}
+						});
 					}
 				}
 			}
 			rulesChain.add(chain);
 		});
 
-//		rulesChain = rulesChain.stream().distinct().collect(Collectors.toList());
+		List<List<String>> newRules = new ArrayList<>();
+
+			for(int i=0; i< rulesChain.size(); i++) {
+				for(int j=0; j<rulesChain.get(i).size(); j++){
+					var newVariable = rulesChain.get(i).get(0);
+					var analizeVariable = rulesChain.get(i).get(j);
+					grammarRules.forEach(rule -> {
+						String newRule = "";
+						if(rule.get(0).equals(analizeVariable) && !unitaryRules.contains(rule)) {
+							newRule = rule.get(1);
+							List<String> addRule = new ArrayList<>();
+							addRule.add(0, newVariable);
+							addRule.add(1, newRule);
+							newRules.add(addRule);
+						}
+					});
+				}
+			}
+
+		cfGrammar.setRules(newRules);
 
         return cfGrammar;
     }

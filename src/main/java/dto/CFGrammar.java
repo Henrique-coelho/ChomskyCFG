@@ -28,7 +28,7 @@ public class CFGrammar {
                     StringBuilder sb = new StringBuilder(stringList);
                     sb.deleteCharAt(stringList.length() - 1);
                     sb.deleteCharAt(0);
-                    return Arrays.asList(sb.toString()
+                    return Arrays.asList(sb.toString().replace(" ","")
                             .split(","));
                 })
                 .flatMap(s -> s.stream())
