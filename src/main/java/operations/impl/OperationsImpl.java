@@ -76,7 +76,7 @@ public class OperationsImpl implements Operations {
 	    						pendingRules.add(newRuleAux);
 	    				}
 	    				
-	    				// Formata as novas regras
+	    				// Formata e armazenas as novas regras, elinando regras autoreferentes no processo
 	    				for(String pendingRule : pendingRules) {
 	    					List<String> newRule = new ArrayList<>();
 	    					newRule.add(l.get(0));
@@ -94,9 +94,9 @@ public class OperationsImpl implements Operations {
 	    	// Enquanto existir novas regras lï¿½mbdas geradas, o processo se repete
         } while (!new HashSet<>(lambdaList).equals(new HashSet<>(lambdListOG)));
         
-        // Remove as regras Lambdas
+        // Remove as regras Lambdas, exceto para variável inicial
         newGrammar.setRules(newGrammar.getRules().stream()
-        		.filter(l -> (!l.get(1).contains("#")))
+        		.filter(l -> (!(l.get(1).contains("#") && !(newGrammar.getStartVar().equals(l.get(0))))))
         		.collect(Collectors.toList())
         	);
         return newGrammar;
@@ -152,14 +152,15 @@ public class OperationsImpl implements Operations {
 							List<String> addRule = new ArrayList<>();
 							addRule.add(0, newVariable);
 							addRule.add(1, newRule);
-							newRules.add(addRule);
+							if(!newRules.contains(addRule))
+								newRules.add(addRule);
 						}
 					});
 				}
 			}
 
 		cfGrammar.setRules(newRules);
-
+		
         return cfGrammar;
     }
 
