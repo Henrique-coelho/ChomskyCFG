@@ -8,6 +8,7 @@ import utils.OperationsUtils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @NoArgsConstructor
@@ -103,7 +104,32 @@ public class OperationsImpl implements Operations {
 
     @Override
     public CFGrammar removeUnitaryRules(CFGrammar cfGrammar) {
-        //TODO
+		var grammarRules = cfGrammar.getRules();
+		var variables = cfGrammar.getVariables();
+		List<List<String>> rulesChain = new ArrayList<>();
+
+		var unitaryRules = grammarRules.stream()
+				.filter(l -> Character.isUpperCase(l.get(1).charAt(0)) && l.get(1).length()==1)
+				.collect(Collectors.toList());
+
+		variables.forEach(r -> {
+			List<String> chain = new ArrayList<>();
+			chain.add(r);
+			for(int i = 0; i < grammarRules.size(); i++){
+				for(int j = 0; j< unitaryRules.size(); j++){
+					var regra = grammarRules.get(i);
+					var regraUnitaria = unitaryRules.get(j);
+
+					if(regra.equals(regraUnitaria) && regra.get(0).equals(r)){
+						chain.add(grammarRules.get(i).get(1));
+					}
+				}
+			}
+			rulesChain.add(chain);
+		});
+
+//		rulesChain = rulesChain.stream().distinct().collect(Collectors.toList());
+
         return cfGrammar;
     }
 
