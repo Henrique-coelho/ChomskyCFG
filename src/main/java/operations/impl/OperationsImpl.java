@@ -3,9 +3,12 @@ package operations.impl;
 import dto.CFGrammar;
 import lombok.NoArgsConstructor;
 import operations.Operations;
+import operations.exc.AlphabetExceededException;
 import utils.OperationsUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -198,13 +201,15 @@ public class OperationsImpl implements Operations {
         		
         		// Adiciona a regra modificada, se ainda for existente
         		if(!command.isEmpty()) {
-        			newRule.add(0, rule.get(0));
-        			newRule.add(1, command);
-        			if(!newRules.contains(newRule) && !(newRule.get(0).equals(newRule.get(1))))
-        				newRules.add(newRule);
+	        		newRule.add(0, rule.get(0));
+	        		newRule.add(1, command);
+	        		if(!newRules.contains(newRule) && !(newRule.get(0).equals(newRule.get(1))))
+	        			newRules.add(newRule);
         		}
         	}
         	cfGrammar.setRules(newRules);
+        	// Remove as variáveis unitárias novamente
+        	cfGrammar = removeUnitaryRules(cfGrammar);
         	
         	// Remove as variáveis inúteis da lista de variáveis
         	List<String> newVariables = new ArrayList<>(cfGrammar.getVariables());
@@ -213,8 +218,7 @@ public class OperationsImpl implements Operations {
         }
         
     	// Parte B
-        // Atualiza a variáveis inuteis para reconhecer as variaveis não geradas pela variável inicial
-        uselessVars.removeAll(uselessVars);
+        // Atualiza a variáveis uteis para reconhecer somente as variaveis geradas pela variável inicial
         List<String> oldUsefullVars;
         List<String> newUsefullVars = new ArrayList<>();
         newUsefullVars.add(cfGrammar.getStartVar());
@@ -253,12 +257,109 @@ public class OperationsImpl implements Operations {
     }
     
     @Override
-    public CFGrammar makeRulesVarOnly(CFGrammar cfGrammar) {
-//    	var grammarRules = cfGrammar.getRules();
-//		var variables = cfGrammar.getVariables();
-//		List<List<String>> rulesChain = new ArrayList<>();
-//		String [] alphabet = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
-//		List<String> test = test.re
+    public CFGrammar makeRulesVarOnly(CFGrammar cfGrammar) throws AlphabetExceededException {
+		List<List<String>> newRules = new ArrayList<>();
+		List<List<String>> needsNewRules = new ArrayList<>();
+		List<String> symbols = new ArrayList<>(cfGrammar.getAlphabetSymbols());
+		
+		// Define as regras que precisam de melhorias, isto é, |w| >= 2, onde w contém não variáveis
+		for(List<String> rule : cfGrammar.getRules()) {
+			String command = rule.get(1);
+			
+			if((command.length() >= 2)) {
+				boolean hasNonVar = false;
+				for(int i=0;i<command.length();i++) {
+					if(symbols.contains(command.substring(i,i+1))) {
+						hasNonVar = true;
+						break;
+					}
+				}
+				
+				if(hasNonVar) {
+					needsNewRules.add(rule);
+				}
+				else
+					newRules.add(rule);
+			}
+			else
+				newRules.add(rule);
+		}
+		
+		String [] alphabetAux = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
+		List<String> alphabet = Arrays.stream(alphabetAux)
+				.collect(Collectors.toList());
+		
+		// Identifica quantas regras uma variável tem
+		HashMap<String, Integer> heldRules = new HashMap<>();
+		for(List<String> rule : cfGrammar.getRules()) {
+			String variable = rule.get(0);
+			if(!heldRules.containsKey(rule.get(0)))
+				heldRules.put(variable, 1);
+			else
+				heldRules.replace(variable, heldRules.get(variable)+1);
+		}
+		
+		// A nova lista de variáveis é acompanhada e atualizada se necessário
+		List<String> variables = cfGrammar.getVariables();
+		// As regras |w| >= 2, onde w contém não variáveis, são atualizadas
+		for(List<String> rule : needsNewRules) {
+			String variable = rule.get(0);
+			String command = rule.get(1);
+
+			String newCommand = "";
+			for(int i=0;i<command.length();i++) {
+				String c = command.substring(i,i+1);
+				// Se o símbolo no comando não for uma variável
+				if(symbols.contains(c)) {
+					// Procura-se uma regra onde uma variável já gera somente este símbolo
+					String equivalentVar = null;
+					for(List<String> currentRule : newRules) {
+						if(currentRule.get(1).equals(c) && heldRules.get(currentRule.get(0)) == 1) {
+							equivalentVar = currentRule.get(0);
+							break;
+						}
+					}
+					// Se não houver variável com tal regra, ela é criada
+					if(equivalentVar == null) {
+						String selectedVar = null;
+						for(String letter : alphabet) {
+							if(!variables.contains(letter)) {
+								selectedVar = letter;
+								variables.add(selectedVar);
+								break;
+							}
+						}
+						// Se todas as letra do alfabeto já representam uma variável, o código lança um erro por não ter representação disponível
+						if (selectedVar == null) {
+							throw new AlphabetExceededException("Não existem mais formas de representação para novas variáveis, visto que todo o alfabeto já foi consumido");
+						}
+						else {
+							List<String> substituteRule = new ArrayList<>();
+							// É criada e adicionada a nova regra
+							substituteRule.add(selectedVar);
+							substituteRule.add(c);
+							newRules.add(substituteRule);
+							heldRules.put(selectedVar, 1);
+							// Ela é então concatenada a expressão
+							newCommand = newCommand.concat(selectedVar);
+						}
+					}
+					// Se houver variável com tal regra, ela é concatenada a expressão
+					else 
+						newCommand = newCommand.concat(equivalentVar);
+				}
+				else
+					newCommand = newCommand.concat(c);
+			}
+			List<String> newRule = new ArrayList<>();
+			newRule.add(variable);
+			newRule.add(newCommand);
+			if(!newRules.contains(newRule))
+				newRules.add(newRule);
+		}
+		
+		cfGrammar.setVariables(variables);
+		cfGrammar.setRules(newRules);
         return cfGrammar;
     }
 

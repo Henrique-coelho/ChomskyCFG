@@ -2,6 +2,7 @@ package job;
 
 import dto.CFGrammar;
 import operations.Operations;
+import operations.exc.AlphabetExceededException;
 import operations.impl.OperationsImpl;
 
 public class Parser {
@@ -13,7 +14,7 @@ public class Parser {
 
     OperationsImpl op;
 
-    public CFGrammar parseGrammarToFNC(CFGrammar cfGrammar){
+    public CFGrammar parseGrammarToFNC(CFGrammar cfGrammar) throws AlphabetExceededException{
     	op = new OperationsImpl();
         cfGrammar = op.removeLambdaRules(cfGrammar);
         cfGrammar = op.removeUnitaryRules(cfGrammar);
