@@ -21,7 +21,7 @@ public final class OperationsUtils {
         return q;
     }
 
-    public static List<List<Integer>> permute(List<Integer> midList, List<Integer> mainList) {
+    private static List<List<Integer>> permute(List<Integer> midList, List<Integer> mainList) {
         int size = mainList.size();
         List<List<Integer>> combinations = new ArrayList<>();
         List<Integer> auxList;

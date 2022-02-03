@@ -15,8 +15,9 @@ public class Parser {
 
     public CFGrammar parseGrammarToFNC(CFGrammar cfGrammar){
     	op = new OperationsImpl();
-        cfGrammar = op.removeUselessVar(cfGrammar);
+        cfGrammar = op.removeLambdaRules(cfGrammar);
         cfGrammar = op.removeUnitaryRules(cfGrammar);
+        cfGrammar = op.removeUselessVar(cfGrammar);
         cfGrammar = op.makeRulesVarOnly(cfGrammar);
         return op.limitVarFromRules(cfGrammar);
     }
