@@ -167,14 +167,15 @@ public class OperationsImpl implements Operations {
     public CFGrammar removeUselessVar(CFGrammar cfGrammar) {
         List<String> uselessVars = new ArrayList<>(cfGrammar.getVariables());
         
-        // Identifica todas variáveis inúteis
+        // Parte A:
+        // Identifica todas variáveis sem regras
         for(List<String> rule : cfGrammar.getRules()) {
         	if(uselessVars.contains(rule.get(0))) {
         		uselessVars.remove(rule.get(0));
         	}
         }
         
-        // Se tiver variáveis inúteis, as regras e variáveis serão atualizadas
+        // Se tiver variáveis sem regras, as regras e variáveis serão atualizadas
         if(!uselessVars.isEmpty()) {
         	List<List<String>> newRules = new ArrayList<>();
         	for(List<String> rule : cfGrammar.getRules()) {
@@ -206,13 +207,46 @@ public class OperationsImpl implements Operations {
         	cfGrammar.setRules(newRules);
         	
         	// Remove as variáveis inúteis da lista de variáveis
-            for(String uselessVar : uselessVars) {
-            	if(cfGrammar.getVariables().contains(uselessVar)) {
-            		List<String> newVariables = new ArrayList<>(cfGrammar.getVariables());
-            		newVariables.remove(uselessVar);
-            		cfGrammar.setVariables(newVariables);
-            	}
-            }
+        	List<String> newVariables = new ArrayList<>(cfGrammar.getVariables());
+        	newVariables.removeAll(uselessVars);
+        	cfGrammar.setVariables(newVariables);
+        }
+        
+    	// Parte B
+        // Atualiza a variáveis inuteis para reconhecer as variaveis não geradas pela variável inicial
+        uselessVars.removeAll(uselessVars);
+        List<String> oldUsefullVars;
+        List<String> newUsefullVars = new ArrayList<>();
+        newUsefullVars.add(cfGrammar.getStartVar());
+        
+        do {
+        	oldUsefullVars = new ArrayList<>(newUsefullVars);
+        	for(List<String> rule : cfGrammar.getRules()) {
+        		if(oldUsefullVars.contains(rule.get(0))) {
+        			String command = rule.get(1);
+        			List<String> variables = cfGrammar.getVariables();
+        			for(int i=0;i<command.length();i++) {
+        				String c = command.substring(i, i+1);
+        				if(variables.contains(c)) {
+        					if(!newUsefullVars.contains(c)) {
+        						newUsefullVars.add(c);
+        					}
+        				}
+        			}
+        		}
+        	}
+        } while(!new HashSet<>(oldUsefullVars).equals(new HashSet<>(newUsefullVars)));
+        
+        final List<String> usefullVars = new ArrayList<>(newUsefullVars);
+        if(!new HashSet<>(usefullVars).equals(new HashSet<>(cfGrammar.getVariables()))) {
+	        // Remove as regras que contém variaveis não geradas
+	        cfGrammar.setRules(cfGrammar.getRules().stream()
+	        		.filter(l -> (usefullVars.contains(l.get(0))))
+	        		.collect(Collectors.toList())
+	        	);
+	        
+	        // Atualiza as novas variáveis
+	        cfGrammar.setVariables(usefullVars);
         }
         
         return cfGrammar;
@@ -220,7 +254,11 @@ public class OperationsImpl implements Operations {
     
     @Override
     public CFGrammar makeRulesVarOnly(CFGrammar cfGrammar) {
-        //TODO
+//    	var grammarRules = cfGrammar.getRules();
+//		var variables = cfGrammar.getVariables();
+//		List<List<String>> rulesChain = new ArrayList<>();
+//		String [] alphabet = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
+//		List<String> test = test.re
         return cfGrammar;
     }
 
