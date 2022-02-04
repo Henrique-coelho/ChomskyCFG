@@ -3,7 +3,7 @@ package operations.impl;
 import dto.CFGrammar;
 import lombok.NoArgsConstructor;
 import operations.Operations;
-import operations.exc.AlphabetExceededException;
+import exceptions.AlphabetExceededException;
 import utils.OperationsUtils;
 
 import java.util.ArrayList;
@@ -96,7 +96,7 @@ public class OperationsImpl implements Operations {
 	    	// Enquanto existir novas regras lï¿½mbdas geradas, o processo se repete
         } while (!new HashSet<>(lambdaList).equals(new HashSet<>(lambdListOG)));
         
-        // Remove as regras Lambdas, exceto para variável inicial
+        // Remove as regras Lambdas, exceto para variï¿½vel inicial
         newGrammar.setRules(newGrammar.getRules().stream()
         		.filter(l -> (!(l.get(1).contains("#") && !(newGrammar.getStartVar().equals(l.get(0))))))
         		.collect(Collectors.toList())
@@ -114,6 +114,7 @@ public class OperationsImpl implements Operations {
 				.filter(l -> Character.isUpperCase(l.get(1).charAt(0)) && l.get(1).length()==1)
 				.collect(Collectors.toList());
 
+		//Encadeamento de cada variavel
 		variables.forEach(r -> {
 			List<String> chain = new ArrayList<>();
 			chain.add(r);
@@ -171,21 +172,21 @@ public class OperationsImpl implements Operations {
         List<String> uselessVars = new ArrayList<>(cfGrammar.getVariables());
         
         // Parte A:
-        // Identifica todas variáveis sem regras
+        // Identifica todas variaveis sem regras
         for(List<String> rule : cfGrammar.getRules()) {
         	if(uselessVars.contains(rule.get(0))) {
         		uselessVars.remove(rule.get(0));
         	}
         }
         
-        // Se tiver variáveis sem regras, as regras e variáveis serão atualizadas
+        // Se tiver variaveis sem regras, as regras e variaveis serao atualizadas
         if(!uselessVars.isEmpty()) {
         	List<List<String>> newRules = new ArrayList<>();
         	for(List<String> rule : cfGrammar.getRules()) {
         		List<String> newRule = new ArrayList<>();
         		String command = rule.get(1);
         		
-        		// É removido cada variável inútil das regras envolvidas
+        		// ï¿½ removido cada variavel inutil das regras envolvidas
         		for(String uselessVar : uselessVars) {
         			if(rule.get(1).contains(uselessVar)) {
         				String oldCommand = command;
@@ -208,17 +209,17 @@ public class OperationsImpl implements Operations {
         		}
         	}
         	cfGrammar.setRules(newRules);
-        	// Remove as variáveis unitárias novamente
+        	// Remove as variaveis unitarias novamente
         	cfGrammar = removeUnitaryRules(cfGrammar);
         	
-        	// Remove as variáveis inúteis da lista de variáveis
+        	// Remove as variaveis inuteis da lista de variaveis
         	List<String> newVariables = new ArrayList<>(cfGrammar.getVariables());
         	newVariables.removeAll(uselessVars);
         	cfGrammar.setVariables(newVariables);
         }
         
     	// Parte B
-        // Atualiza a variáveis uteis para reconhecer somente as variaveis geradas pela variável inicial
+        // Atualiza a variaveis uteis para reconhecer somente as variaveis geradas pela variavel inicial
         List<String> oldUsefullVars;
         List<String> newUsefullVars = new ArrayList<>();
         newUsefullVars.add(cfGrammar.getStartVar());
@@ -243,13 +244,13 @@ public class OperationsImpl implements Operations {
         
         final List<String> usefullVars = new ArrayList<>(newUsefullVars);
         if(!new HashSet<>(usefullVars).equals(new HashSet<>(cfGrammar.getVariables()))) {
-	        // Remove as regras que contém variaveis não geradas
+	        // Remove as regras que contem variaveis nao geradas
 	        cfGrammar.setRules(cfGrammar.getRules().stream()
 	        		.filter(l -> (usefullVars.contains(l.get(0))))
 	        		.collect(Collectors.toList())
 	        	);
 	        
-	        // Atualiza as novas variáveis
+	        // Atualiza as novas variaveis
 	        cfGrammar.setVariables(usefullVars);
         }
         
@@ -262,7 +263,7 @@ public class OperationsImpl implements Operations {
 		List<List<String>> needsNewRules = new ArrayList<>();
 		List<String> symbols = new ArrayList<>(cfGrammar.getAlphabetSymbols());
 		
-		// Define as regras que precisam de melhorias, isto é, |w| >= 2, onde w contém não variáveis
+		// Define as regras que precisam de melhorias, isto eh, |w| >= 2, onde w contem nao variaveis
 		for(List<String> rule : cfGrammar.getRules()) {
 			String command = rule.get(1);
 			
@@ -289,7 +290,7 @@ public class OperationsImpl implements Operations {
 		List<String> alphabet = Arrays.stream(alphabetAux)
 				.collect(Collectors.toList());
 		
-		// Identifica quantas regras uma variável tem
+		// Identifica quantas regras uma variavel tem
 		HashMap<String, Integer> heldRules = new HashMap<>();
 		for(List<String> rule : cfGrammar.getRules()) {
 			String variable = rule.get(0);
@@ -299,9 +300,9 @@ public class OperationsImpl implements Operations {
 				heldRules.replace(variable, heldRules.get(variable)+1);
 		}
 		
-		// A nova lista de variáveis é acompanhada e atualizada se necessário
+		// A nova lista de variaveis eh acompanhada e atualizada se necessario
 		List<String> variables = cfGrammar.getVariables();
-		// As regras |w| >= 2, onde w contém não variáveis, são atualizadas
+		// As regras |w| >= 2, onde w contem nao variaveis, sao atualizadas
 		for(List<String> rule : needsNewRules) {
 			String variable = rule.get(0);
 			String command = rule.get(1);
@@ -309,9 +310,9 @@ public class OperationsImpl implements Operations {
 			String newCommand = "";
 			for(int i=0;i<command.length();i++) {
 				String c = command.substring(i,i+1);
-				// Se o símbolo no comando não for uma variável
+				// Se o simbolo no comando nao for uma variavel
 				if(symbols.contains(c)) {
-					// Procura-se uma regra onde uma variável já gera somente este símbolo
+					// Procura-se uma regra onde uma variavel ja gera somente este simbolo
 					String equivalentVar = null;
 					for(List<String> currentRule : newRules) {
 						if(currentRule.get(1).equals(c) && heldRules.get(currentRule.get(0)) == 1) {
@@ -319,7 +320,7 @@ public class OperationsImpl implements Operations {
 							break;
 						}
 					}
-					// Se não houver variável com tal regra, ela é criada
+					// Se nao houver variavel com tal regra, ela eh criada
 					if(equivalentVar == null) {
 						String selectedVar = null;
 						for(String letter : alphabet) {
@@ -329,22 +330,22 @@ public class OperationsImpl implements Operations {
 								break;
 							}
 						}
-						// Se todas as letra do alfabeto já representam uma variável, o código lança um erro por não ter representação disponível
+						// Se todas as letra do alfabeto ja representam uma variavel, o codigo lanca um erro por nao ter representacao disponivel
 						if (selectedVar == null) {
-							throw new AlphabetExceededException("Não existem mais formas de representação para novas variáveis, visto que todo o alfabeto já foi consumido");
+							throw new AlphabetExceededException("Nao existem mais formas de representacao para novas variaveis, visto que todo o alfabeto ja foi consumido");
 						}
 						else {
 							List<String> substituteRule = new ArrayList<>();
-							// É criada e adicionada a nova regra
+							// eh criada e adicionada a nova regra
 							substituteRule.add(selectedVar);
 							substituteRule.add(c);
 							newRules.add(substituteRule);
 							heldRules.put(selectedVar, 1);
-							// Ela é então concatenada a expressão
+							// Ela eh entao concatenada a expressao
 							newCommand = newCommand.concat(selectedVar);
 						}
 					}
-					// Se houver variável com tal regra, ela é concatenada a expressão
+					// Se houver variavel com tal regra, ela eh concatenada a expressao
 					else 
 						newCommand = newCommand.concat(equivalentVar);
 				}

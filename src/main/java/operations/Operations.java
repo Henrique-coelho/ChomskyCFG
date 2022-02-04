@@ -1,7 +1,7 @@
 package operations;
 
 import dto.CFGrammar;
-import operations.exc.AlphabetExceededException;
+import exceptions.AlphabetExceededException;
 
 public interface Operations {
 

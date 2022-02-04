@@ -1,4 +1,4 @@
-package operations.exc;
+package exceptions;
 
 public class AlphabetExceededException extends Exception {
 	public AlphabetExceededException (String message) {
