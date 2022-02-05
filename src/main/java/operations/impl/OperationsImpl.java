@@ -387,7 +387,10 @@ public class OperationsImpl implements Operations {
 				var changedRule = rule;
 				var newVarLetter = getNewVarLetter(newVariables);
 				var getNewCommand = rule.get(1).substring(1);
-				var newChangedRule = Arrays.asList(new String[]{changedRule.get(0), changedRule.get(1).replace(getNewCommand, newVarLetter)});
+
+				var startR = changedRule.get(1).substring(0,1);
+				var newStringR = changedRule.get(1).substring(1).replace(getNewCommand, newVarLetter);
+				var newChangedRule = Arrays.asList(new String[]{changedRule.get(0), startR.concat(newStringR)});
 
 				String equivalentVar = null;
 				for(List<String> currentRule : newRuleList) {
@@ -406,8 +409,10 @@ public class OperationsImpl implements Operations {
 				newRule.add(1, getNewCommand);
 
 				rulesList.stream().forEach(r -> {
-					if(r.get(1).contains(newRule.get(1))){
-						r.set(1, r.get(1).replace(newRule.get(1), newRule.get(0)));
+					if(r.get(1).contains(newRule.get(1)) && r.get(1).length()>2){
+						var start = r.get(1).substring(0,1);
+						var newString = r.get(1).substring(1).replace(newRule.get(1), newRule.get(0));
+						r.set(1, start.concat(newString));
 					}
 				});
 
