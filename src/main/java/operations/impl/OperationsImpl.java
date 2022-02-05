@@ -367,36 +367,74 @@ public class OperationsImpl implements Operations {
         var rulesList = cfGrammar.getRules();
 
 		List<List<String>> newRuleList = new ArrayList<>();
+		List<String> newVariables = new ArrayList<>(cfGrammar.getVariables());
+
+		HashMap<String, Integer> heldRules = new HashMap<>();
+		for(List<String> rule : cfGrammar.getRules()) {
+			String variable = rule.get(0);
+			if(!heldRules.containsKey(rule.get(0)))
+				heldRules.put(variable, 1);
+			else
+				heldRules.replace(variable, heldRules.get(variable)+1);
+		}
 
 		rulesList.forEach(rule -> {
 			if(rule.get(1).length()<=2){
 				newRuleList.add(rule);
 			} else if(rule.get(1).length()>2 && !newRuleList.contains(rule)){
+
 				List<String> newRule = new ArrayList<>();
 				var changedRule = rule;
-				var newVarLetter = getNewVarLetter(rulesList);
-				var getFirstTwoChar = rule.get(1).substring(1,3);
-				var newChangedRule = Arrays.asList(new String[]{changedRule.get(0), changedRule.get(1).replace(getFirstTwoChar, newVarLetter)});
-				newRule.add(0, newVarLetter);
-				newRule.add(1, getFirstTwoChar);
+				var newVarLetter = getNewVarLetter(newVariables);
+				var getNewCommand = rule.get(1).substring(1);
+				var newChangedRule = Arrays.asList(new String[]{changedRule.get(0), changedRule.get(1).replace(getNewCommand, newVarLetter)});
+
+				String equivalentVar = null;
+				for(List<String> currentRule : newRuleList) {
+					if(heldRules.get(currentRule.get(0)) == 1 && newChangedRule.get(1).equals(currentRule.get(1))) {
+						equivalentVar = currentRule.get(0);
+						break;
+					}
+				}
+				if(equivalentVar==null){
+					equivalentVar = newVarLetter;
+					heldRules.put(newVarLetter, 1);
+					newVariables.add(equivalentVar);
+				}
+
+				newRule.add(0, equivalentVar);
+				newRule.add(1, getNewCommand);
+
 				rulesList.stream().forEach(r -> {
 					if(r.get(1).contains(newRule.get(1))){
-						r.get(1).replace(newRule.get(1), newRule.get(0));
+						r.set(1, r.get(1).replace(newRule.get(1), newRule.get(0)));
 					}
 				});
+
 				newRuleList.add(newRule);
 				newRuleList.add(newChangedRule);
+
 			}
 		});
-		cfGrammar.setRules(newRuleList);
+
+
+		cfGrammar.setRules(newRuleList.stream().distinct().collect(Collectors.toList()));
+		cfGrammar.setVariables(newVariables.stream().distinct().collect(Collectors.toList()));
+
+		for(int i = 0; i< newRuleList.size(); i++){
+			if(newRuleList.get(i).get(1).length()>2){
+				cfGrammar = limitVarFromRules(cfGrammar);
+			}
+		}
 
         return cfGrammar;
     }
 
-	private String getNewVarLetter(List<List<String>> rulesList) {
+	private String getNewVarLetter(List<String> varList) {
 		var alphabet = Arrays.asList(new String[] {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"});
 		List<String> letterList = new ArrayList<>();
-		rulesList.stream().forEach(r -> letterList.add(r.get(0)));
+
+		varList.stream().forEach(r -> letterList.add(r));
 		String newVarLetter = "";
 
 		for(int i=0; i< alphabet.size(); i++){
