@@ -286,10 +286,8 @@ public class OperationsImpl implements Operations {
 				newRules.add(rule);
 		}
 		
-		String [] alphabetAux = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
-		List<String> alphabet = Arrays.stream(alphabetAux)
-				.collect(Collectors.toList());
-		
+		var alphabet = Arrays.asList(new String[] {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"});
+
 		// Identifica quantas regras uma variavel tem
 		HashMap<String, Integer> heldRules = new HashMap<>();
 		for(List<String> rule : cfGrammar.getRules()) {
@@ -366,7 +364,48 @@ public class OperationsImpl implements Operations {
 
     @Override
     public CFGrammar limitVarFromRules(CFGrammar cfGrammar) {
-        //TODO
+        var rulesList = cfGrammar.getRules();
+
+		List<List<String>> newRuleList = new ArrayList<>();
+
+		rulesList.forEach(rule -> {
+			if(rule.get(1).length()<=2){
+				newRuleList.add(rule);
+			} else if(rule.get(1).length()>2 && !newRuleList.contains(rule)){
+				List<String> newRule = new ArrayList<>();
+				var changedRule = rule;
+				var newVarLetter = getNewVarLetter(rulesList);
+				var getFirstTwoChar = rule.get(1).substring(1,3);
+				var newChangedRule = Arrays.asList(new String[]{changedRule.get(0), changedRule.get(1).replace(getFirstTwoChar, newVarLetter)});
+				newRule.add(0, newVarLetter);
+				newRule.add(1, getFirstTwoChar);
+				rulesList.stream().forEach(r -> {
+					if(r.get(1).contains(newRule.get(1))){
+						r.get(1).replace(newRule.get(1), newRule.get(0));
+					}
+				});
+				newRuleList.add(newRule);
+				newRuleList.add(newChangedRule);
+			}
+		});
+		cfGrammar.setRules(newRuleList);
+
         return cfGrammar;
     }
+
+	private String getNewVarLetter(List<List<String>> rulesList) {
+		var alphabet = Arrays.asList(new String[] {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"});
+		List<String> letterList = new ArrayList<>();
+		rulesList.stream().forEach(r -> letterList.add(r.get(0)));
+		String newVarLetter = "";
+
+		for(int i=0; i< alphabet.size(); i++){
+			if(!letterList.contains(alphabet.get(i))){
+				newVarLetter = alphabet.get(i);
+				break;
+			}
+		}
+		return newVarLetter;
+	}
+
 }
