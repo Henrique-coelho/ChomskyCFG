@@ -1,9 +1,11 @@
 package utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
+import exceptions.AlphabetExceededException;
 
 public final class OperationsUtils {
 
@@ -41,4 +43,22 @@ public final class OperationsUtils {
         }
         return combinations;
     }
+    
+    public static String getNewVarLetter(List<String> varList) throws AlphabetExceededException{
+		var alphabet = Arrays.asList(new String[] {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"});
+		List<String> letterList = new ArrayList<>();
+
+		varList.stream().forEach(r -> letterList.add(r));
+		String newVarLetter = "";
+
+		for(int i=0; i< alphabet.size(); i++){
+			if(!letterList.contains(alphabet.get(i))){
+				newVarLetter = alphabet.get(i);
+				break;
+			}
+		}
+		if (newVarLetter == null)
+			throw new AlphabetExceededException("Nao existem mais formas de representacao para novas variaveis, visto que todo o alfabeto ja foi consumido");
+		return newVarLetter;
+	}
 }

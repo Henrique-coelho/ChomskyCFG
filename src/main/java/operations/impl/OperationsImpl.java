@@ -275,15 +275,9 @@ public class OperationsImpl implements Operations {
 						break;
 					}
 				}
-				
-				if(hasNonVar) {
+				if(hasNonVar) 
 					needsNewRules.add(rule);
-				}
-				else
-					newRules.add(rule);
 			}
-			else
-				newRules.add(rule);
 		}
 		
 		var alphabet = Arrays.asList(new String[] {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"});
@@ -300,61 +294,66 @@ public class OperationsImpl implements Operations {
 		
 		// A nova lista de variaveis eh acompanhada e atualizada se necessario
 		List<String> variables = cfGrammar.getVariables();
+		
 		// As regras |w| >= 2, onde w contem nao variaveis, sao atualizadas
-		for(List<String> rule : needsNewRules) {
-			String variable = rule.get(0);
-			String command = rule.get(1);
-
-			String newCommand = "";
-			for(int i=0;i<command.length();i++) {
-				String c = command.substring(i,i+1);
-				// Se o simbolo no comando nao for uma variavel
-				if(symbols.contains(c)) {
-					// Procura-se uma regra onde uma variavel ja gera somente este simbolo
-					String equivalentVar = null;
-					for(List<String> currentRule : newRules) {
-						if(currentRule.get(1).equals(c) && heldRules.get(currentRule.get(0)) == 1) {
-							equivalentVar = currentRule.get(0);
-							break;
-						}
-					}
-					// Se nao houver variavel com tal regra, ela eh criada
-					if(equivalentVar == null) {
-						String selectedVar = null;
-						for(String letter : alphabet) {
-							if(!variables.contains(letter)) {
-								selectedVar = letter;
-								variables.add(selectedVar);
+		for(List<String> rule : cfGrammar.getRules()) {
+			if(!needsNewRules.contains(rule))
+				newRules.add(rule);
+			else {
+				String variable = rule.get(0);
+				String command = rule.get(1);
+	
+				String newCommand = "";
+				for(int i=0;i<command.length();i++) {
+					String c = command.substring(i,i+1);
+					// Se o simbolo no comando nao for uma variavel
+					if(symbols.contains(c)) {
+						// Procura-se uma regra onde uma variavel ja gera somente este simbolo
+						String equivalentVar = null;
+						for(List<String> currentRule : newRules) {
+							if(currentRule.get(1).equals(c) && heldRules.get(currentRule.get(0)) == 1) {
+								equivalentVar = currentRule.get(0);
 								break;
 							}
 						}
-						// Se todas as letra do alfabeto ja representam uma variavel, o codigo lanca um erro por nao ter representacao disponivel
-						if (selectedVar == null) {
-							throw new AlphabetExceededException("Nao existem mais formas de representacao para novas variaveis, visto que todo o alfabeto ja foi consumido");
+						// Se nao houver variavel com tal regra, ela eh criada
+						if(equivalentVar == null) {
+							String selectedVar = null;
+							for(String letter : alphabet) {
+								if(!variables.contains(letter)) {
+									selectedVar = letter;
+									variables.add(selectedVar);
+									break;
+								}
+							}
+							// Se todas as letra do alfabeto ja representam uma variavel, o codigo lanca um erro por nao ter representacao disponivel
+							if (selectedVar == null) {
+								throw new AlphabetExceededException("Nao existem mais formas de representacao para novas variaveis, visto que todo o alfabeto ja foi consumido");
+							}
+							else {
+								List<String> substituteRule = new ArrayList<>();
+								// eh criada e adicionada a nova regra
+								substituteRule.add(selectedVar);
+								substituteRule.add(c);
+								newRules.add(substituteRule);
+								heldRules.put(selectedVar, 1);
+								// Ela eh entao concatenada a expressao
+								newCommand = newCommand.concat(selectedVar);
+							}
 						}
-						else {
-							List<String> substituteRule = new ArrayList<>();
-							// eh criada e adicionada a nova regra
-							substituteRule.add(selectedVar);
-							substituteRule.add(c);
-							newRules.add(substituteRule);
-							heldRules.put(selectedVar, 1);
-							// Ela eh entao concatenada a expressao
-							newCommand = newCommand.concat(selectedVar);
-						}
+						// Se houver variavel com tal regra, ela eh concatenada a expressao
+						else 
+							newCommand = newCommand.concat(equivalentVar);
 					}
-					// Se houver variavel com tal regra, ela eh concatenada a expressao
-					else 
-						newCommand = newCommand.concat(equivalentVar);
+					else
+						newCommand = newCommand.concat(c);
 				}
-				else
-					newCommand = newCommand.concat(c);
+				List<String> newRule = new ArrayList<>();
+				newRule.add(variable);
+				newRule.add(newCommand);
+				if(!newRules.contains(newRule))
+					newRules.add(newRule);
 			}
-			List<String> newRule = new ArrayList<>();
-			newRule.add(variable);
-			newRule.add(newCommand);
-			if(!newRules.contains(newRule))
-				newRules.add(newRule);
 		}
 		
 		cfGrammar.setVariables(variables);
@@ -363,12 +362,13 @@ public class OperationsImpl implements Operations {
     }
 
     @Override
-    public CFGrammar limitVarFromRules(CFGrammar cfGrammar) {
+    public CFGrammar limitVarFromRules(CFGrammar cfGrammar) throws AlphabetExceededException{
         var rulesList = cfGrammar.getRules();
 
 		List<List<String>> newRuleList = new ArrayList<>();
 		List<String> newVariables = new ArrayList<>(cfGrammar.getVariables());
 
+		// Registra o número de ocorrências de uma mesma regra
 		HashMap<String, Integer> heldRules = new HashMap<>();
 		for(List<String> rule : cfGrammar.getRules()) {
 			String variable = rule.get(0);
@@ -377,53 +377,65 @@ public class OperationsImpl implements Operations {
 			else
 				heldRules.replace(variable, heldRules.get(variable)+1);
 		}
-
-		rulesList.forEach(rule -> {
+		
+		// Persiste as regras no formato correto
+		for(List<String> rule : rulesList) {
 			if(rule.get(1).length()<=2){
 				newRuleList.add(rule);
-			} else if(rule.get(1).length()>2 && !newRuleList.contains(rule)){
-
-				List<String> newRule = new ArrayList<>();
-				var changedRule = rule;
-				var newVarLetter = getNewVarLetter(newVariables);
-				var getNewCommand = rule.get(1).substring(1);
-
-				var startR = changedRule.get(1).substring(0,1);
-				var newStringR = changedRule.get(1).substring(1).replace(getNewCommand, newVarLetter);
-				var newChangedRule = Arrays.asList(new String[]{changedRule.get(0), startR.concat(newStringR)});
-
-				String equivalentVar = null;
-				for(List<String> currentRule : newRuleList) {
-					if(heldRules.get(currentRule.get(0)) == 1 && newChangedRule.get(1).equals(currentRule.get(1))) {
-						equivalentVar = currentRule.get(0);
-						break;
-					}
-				}
-				if(equivalentVar==null){
-					equivalentVar = newVarLetter;
-					heldRules.put(newVarLetter, 1);
-					newVariables.add(equivalentVar);
-				}
-
-				newRule.add(0, equivalentVar);
-				newRule.add(1, getNewCommand);
-
-				rulesList.stream().forEach(r -> {
-					if(r.get(1).contains(newRule.get(1)) && r.get(1).length()>2){
-						var start = r.get(1).substring(0,1);
-						var newString = r.get(1).substring(1).replace(newRule.get(1), newRule.get(0));
-						r.set(1, start.concat(newString));
-					}
-				});
-
-				newRuleList.add(newRule);
-				newRuleList.add(newChangedRule);
-
 			}
-		});
+		}
+		
+		// Atualiza regras do formato: v -> w, onde |w| > 2
+		for(List<String> rule : rulesList) {
+			if(rule.get(1).length()>2 && !newRuleList.contains(rule)){
+				// Regra atual, eventualmente atualizada
+				List<String> currentRule = new ArrayList<>(rule);
+				do {
+					// Regra modificada que vai substituir a original
+					List<String> modifiedRule = new ArrayList<>();
+					// Regra criada para criar a versão modificada anterior
+					List<String> newRule = Arrays.asList(new String []{"##","##"});
+					
+					// é obtido uma regra candidato para auxiliar a modificar a regra original
+					var letterCandidate = OperationsUtils.getNewVarLetter(newVariables);
+					var commandCandidate = currentRule.get(1).substring(1);			
+					
+					// Identifica se existe regra equivalente ao candidato
+					String letterDefinitive = null;
+					for(List<String> addedRules : newRuleList) {
+						if(heldRules.get(addedRules.get(0)) == 1 && commandCandidate.equals(addedRules.get(1))) {
+							letterDefinitive = addedRules.get(0);
+							break;
+						}
+					}
+					
+					// Se não existe uma regra equivalente, ela é criada com o candidato apresentado
+					if(letterDefinitive==null){
+						letterDefinitive = letterCandidate;
+						heldRules.put(letterCandidate, 1);
+						newVariables.add(letterCandidate);
+						newRule = Arrays.asList(new String[]{letterCandidate,commandCandidate});
+						// Adiciona expressão a lista para futura comparações de equivalências, é removida posteriormente
+						newRuleList.add(newRule);
+					}
+	
+					modifiedRule = Arrays.asList(new String []{currentRule.get(0),currentRule.get(1).substring(0,1).concat(letterDefinitive)});
+					currentRule = new ArrayList<>(newRule);
+					
+					// Adiciona a regra modificada, e sua auxiliar gerada, se final
+					if(!newRuleList.contains(modifiedRule))
+						newRuleList.add(modifiedRule);
+					currentRule = new ArrayList<>(newRule);
+					if(!newRule.contains("##"))
+						if(newRule.get(1).length() <= 2)
+							if(!newRuleList.contains(newRule))
+								newRuleList.add(newRule);
+				} while (currentRule.get(1).length() > 2);
+			}
+		};
 
-
-		cfGrammar.setRules(newRuleList.stream().distinct().collect(Collectors.toList()));
+		cfGrammar.setRules(newRuleList.stream()
+				.filter(l -> (l.get(1).length() <= 2)).distinct().collect(Collectors.toList()));
 		cfGrammar.setVariables(newVariables.stream().distinct().collect(Collectors.toList()));
 
 		for(int i = 0; i< newRuleList.size(); i++){
@@ -434,21 +446,4 @@ public class OperationsImpl implements Operations {
 
         return cfGrammar;
     }
-
-	private String getNewVarLetter(List<String> varList) {
-		var alphabet = Arrays.asList(new String[] {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"});
-		List<String> letterList = new ArrayList<>();
-
-		varList.stream().forEach(r -> letterList.add(r));
-		String newVarLetter = "";
-
-		for(int i=0; i< alphabet.size(); i++){
-			if(!letterList.contains(alphabet.get(i))){
-				newVarLetter = alphabet.get(i);
-				break;
-			}
-		}
-		return newVarLetter;
-	}
-
 }

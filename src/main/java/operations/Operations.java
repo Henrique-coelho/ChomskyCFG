@@ -9,6 +9,6 @@ public interface Operations {
     CFGrammar removeUnitaryRules(CFGrammar cfGrammar);
     CFGrammar removeUselessVar(CFGrammar cfGrammar);
     CFGrammar makeRulesVarOnly(CFGrammar cfGrammar) throws AlphabetExceededException;
-    CFGrammar limitVarFromRules(CFGrammar cfGrammar);
+    CFGrammar limitVarFromRules(CFGrammar cfGrammar) throws AlphabetExceededException;
 
 }
